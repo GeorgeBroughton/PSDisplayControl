@@ -179,7 +179,7 @@ class iiyama {
         return [PSCustomObject]@{ Response = 'Error' }
     }
 
-    [PSCustomObject] SetIRRemoteLock ([string]$LockStatus) {
+    [PSCustomObject] SetIRLockStatus ([string]$LockStatus) {
         if ( $This.TranslationTable.IRRemoteLock.$LockStatus ) {
             $This.Send((0x1C,$This.TranslationTable.IRRemoteLock.$LockStatus))
             return $This.Receive()
@@ -187,9 +187,9 @@ class iiyama {
         return [PSCustomObject]@{ Response = 'Error' }
     }
 
-    [PSCustomObject] SetKeypadLock ([string]$LockStatus) {
+    [PSCustomObject] SetKeypadLockStatus ([string]$LockStatus) {
         if ( $This.TranslationTable.KeypadLock.$LockStatus ) {
-            $This.Send((0x1C,$This.TranslationTable.KeypadLock.$LockStatus))
+            $This.Send((0x1A,$This.TranslationTable.KeypadLock.$LockStatus))
             return $This.Receive()
         }
         return [PSCustomObject]@{ Response = 'Error' }
