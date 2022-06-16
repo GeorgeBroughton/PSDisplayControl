@@ -202,6 +202,8 @@ class iiyama {
 
     # Get Commands
 
+
+
     [PSCustomObject] GetPower () {
         $This.Send((0x19))
         return $This.Receive()
@@ -305,6 +307,9 @@ class iiyama {
                                 $Value = $This.TranslationTable.KeypadLock.PSObject.Properties.Where({$_.Value -eq $ReadBuffer[7]}).Name
                                 if ($Value) { return [PSCustomObject]@{Keypad_Lock = $Value } }
                                 return [PSCustomObject]@{ Status = 'Error' ; Details = "Keypad Lock Status: Property out of bounds." }
+                            }
+                            0xA2 {
+                                return [PSCustomObject]@{Response = $ReadBuffer[7..($ReadBuffer.Count-2)] }
                             }
                             0xA4 {
                                 $Value = $This.TranslationTable.ReturnPower.PSObject.Properties.Where({$_.Value -eq $ReadBuffer[7]}).Name
@@ -419,4 +424,5 @@ class iiyama {
         $This.Device.Write($SendBuffer,0,$SendBuffer.Count)
         
     }
+
 }
