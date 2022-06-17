@@ -4,6 +4,14 @@ class iiyama {
     [string]$Port = 'COM1'
     [int]$MonitorID = 1
 
+    [string]$SICPVersion
+    [string]$PlatformLabel
+    [string]$PlatformVersion
+    
+    [String]$ModelNumber
+    [string]$FirmwareVersion
+    [string]$BuildDate
+
     hidden [HashTable]$TranslationTable = @{
         Power = [PSCustomObject]@{
             'Off'                       = 0x01
@@ -114,6 +122,15 @@ class iiyama {
             $This.Device.ReadTimeout    = 1000
             $This.Device.WriteTimeout   = 1000
             $This.Device.open()
+
+            # Get monitor info
+            $This.Send((0xA2,0x00));$This.SICPVersion        = $This.Receive().Response
+            $This.Send((0xA2,0x01));$This.PlatformLabel      = $This.Receive().Response
+            $This.Send((0xA2,0x02));$This.PlatformVersion    = $This.Receive().Response
+            $This.Send((0xA1,0x00));$This.ModelNumber        = $This.Receive().Response
+            $This.Send((0xA1,0x01));$This.FirmwareVersion    = $This.Receive().Response
+            $This.Send((0xA1,0x02));$This.BuildDate          = $This.Receive().Response
+            
         }
         Catch {
             $This.Device.close()
@@ -260,7 +277,7 @@ class iiyama {
     }
 
     [PSCustomObject] GetOperatingHours () {
-        $This.Send((0x0F))
+        $This.Send((0x0F,0x02))
         return $This.Receive()
     }
 
@@ -308,9 +325,8 @@ class iiyama {
                                 if ($Value) { return [PSCustomObject]@{Keypad_Lock = $Value } }
                                 return [PSCustomObject]@{ Status = 'Error' ; Details = "Keypad Lock Status: Property out of bounds." }
                             }
-                            0xA2 {
-                                return [PSCustomObject]@{Response = $ReadBuffer[7..($ReadBuffer.Count-2)] }
-                            }
+                            0xA1 { return [PSCustomObject]@{Response = [System.Text.Encoding]::ASCII.GetString($ReadBuffer[7..($ReadBuffer.Count-2)]) }}
+                            0xA2 { return [PSCustomObject]@{Response = [System.Text.Encoding]::ASCII.GetString($ReadBuffer[7..($ReadBuffer.Count-2)]) }}
                             0xA4 {
                                 $Value = $This.TranslationTable.ReturnPower.PSObject.Properties.Where({$_.Value -eq $ReadBuffer[7]}).Name
                                 if ($Value) { return [PSCustomObject]@{Return_Power_State = $Value } }
@@ -394,7 +410,7 @@ class iiyama {
                             }
                             0x0F {
                                 [PSCustomObject]@{
-                                    Operating_Hours = [System.BitConverter]::ToInt16($ReadBuffer,2)
+                                    Operating_Hours = [System.BitConverter]::ToInt16(($ReadBuffer[8,7]),0)
                                 }
                             }
                         }
